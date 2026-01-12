@@ -284,14 +284,29 @@
             color: var(--text-main);
         }
 
-        .suggestion-item {
-            background: var(--accent-light);
+        .recommendation {
             padding: 14px;
             border-radius: 6px;
             margin-bottom: 10px;
             font-size: 14px;
             color: var(--text-main);
-            border-left: 3px solid var(--accent);
+        }
+
+        .recommendation.primary {
+            background: #dcfce7;
+            border-left: 4px solid var(--accent);
+            font-weight: 500;
+        }
+
+        .recommendation.secondary {
+            background: #f7fdf9;
+            border-left: 3px solid #a7f3d0;
+        }
+
+        .recommendation.tip {
+            background: #f9fafb;
+            border-left: 3px solid #cbd5e1;
+            color: #475569;
         }
 
         .app-footer {
@@ -476,9 +491,14 @@
             </div>
 
             <div class="suggestions-card">
-                <h3>Actionable Recommendations</h3>
-                ${result.suggestions.map(s => `<div class="suggestion-item">${s}</div>`).join("")}
-                <div class="suggestion-item">💡 Tip: Add missing skills naturally in experience or projects sections, not as a skill dump.</div>
+                <h3>What to Fix First</h3>
+                ${result.suggestions.map((s, idx) => {
+                const isPrimary = idx === 0;
+                const isTip = s.includes('instead of listing') || s.includes('Strong alignment') || s.includes('Focus on matching');
+                const className = isPrimary ? 'recommendation primary' : (isTip ? 'recommendation tip' : 'recommendation secondary');
+                const icon = isTip ? '💡 ' : '';
+                return `<div class="${className}">${icon}${s}</div>`;
+            }).join("")}
             </div>
         `;
 
