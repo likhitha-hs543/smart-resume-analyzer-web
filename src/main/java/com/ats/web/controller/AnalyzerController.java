@@ -20,6 +20,9 @@ public class AnalyzerController {
     public AnalysisResult analyze(
             @RequestParam("resume") MultipartFile resume,
             @RequestParam("jobDescription") String jobDescription) {
+        System.out.println(">>> CONTROLLER HIT");
+        System.out.println("File name: " + resume.getOriginalFilename());
+        System.out.println("File size: " + resume.getSize());
         return analyzerService.analyze(resume, jobDescription);
     }
 }
