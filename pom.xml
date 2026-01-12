@@ -55,7 +55,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<mainClass>com.ats.smart_resume_analyzer_web.SmartResumeAnalyzerWebApplication</mainClass>
+					<mainClass>com.ats.SmartResumeAnalyzerWebApplication</mainClass>
 				</configuration>
 			</plugin>
 		</plugins>
