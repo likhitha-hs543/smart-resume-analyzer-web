@@ -1,7 +1,6 @@
 package com.ats.analyzer.service;
 
 import com.ats.analyzer.extractor.KeywordExtractor;
-import com.ats.analyzer.input.JDLoader;
 import com.ats.analyzer.matcher.MatchResult;
 import com.ats.analyzer.matcher.SkillMatcher;
 import com.ats.analyzer.parser.TextCleaner;
