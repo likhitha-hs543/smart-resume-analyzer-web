@@ -23,8 +23,6 @@ public class AnalyzerService {
 
     public AnalysisResult analyze(MultipartFile resumeFile, String jobDescription) {
 
-        System.out.println(">>> SERVICE HIT");
-
         if (resumeFile == null || resumeFile.isEmpty()) {
             throw new IllegalArgumentException("Resume file is required");
         }
