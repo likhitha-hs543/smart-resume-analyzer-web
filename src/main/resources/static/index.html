@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Smart Resume Analyzer</title>
@@ -8,39 +9,109 @@
             font-family: Arial, sans-serif;
             margin: 40px;
         }
+
         textarea {
             width: 100%;
             height: 150px;
         }
+
         button {
             margin-top: 10px;
             padding: 10px 16px;
             font-size: 14px;
         }
+
         #results {
             margin-top: 30px;
             padding: 15px;
             border: 1px solid #ddd;
         }
+
+        ul {
+            margin-top: 5px;
+        }
     </style>
 </head>
+
 <body>
 
-<h1>Smart Resume Analyzer</h1>
+    <h1>Smart Resume Analyzer</h1>
 
-<p>Upload your resume and paste the job description to analyze ATS compatibility.</p>
+    <p>Upload your resume and paste the job description to analyze ATS compatibility.</p>
 
-<label><strong>Resume (PDF or TXT):</strong></label><br>
-<input type="file" accept=".pdf,.txt"><br><br>
+    <label><strong>Resume (PDF or TXT):</strong></label><br>
+    <input type="file" id="resumeFile" accept=".pdf,.txt"><br><br>
 
-<label><strong>Job Description:</strong></label><br>
-<textarea placeholder="Paste the job description here..."></textarea><br>
+    <label><strong>Job Description:</strong></label><br>
+    <textarea id="jobDescription" placeholder="Paste the job description here..."></textarea><br>
 
-<button>Analyze</button>
+    <button onclick="analyzeResume()">Analyze</button>
 
-<div id="results">
-    <em>Results will appear here.</em>
-</div>
+    <div id="results">
+        <em>Results will appear here.</em>
+    </div>
+
+    <script>
+        async function analyzeResume() {
+            const resumeInput = document.getElementById("resumeFile");
+            const jdInput = document.getElementById("jobDescription");
+            const resultsDiv = document.getElementById("results");
+
+            if (resumeInput.files.length === 0) {
+                alert("Please upload a resume file.");
+                return;
+            }
+
+            if (!jdInput.value.trim()) {
+                alert("Please paste the job description.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("resume", resumeInput.files[0]);
+            formData.append("jobDescription", jdInput.value);
+
+            resultsDiv.innerHTML = "<em>Analyzing...</em>";
+
+            try {
+                const response = await fetch("/api/analyze", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error("Analysis failed");
+                }
+
+                const result = await response.json();
+                displayResults(result);
+
+            } catch (error) {
+                resultsDiv.innerHTML = "<strong>Error:</strong> Unable to analyze resume.";
+            }
+        }
+
+        function displayResults(result) {
+            const resultsDiv = document.getElementById("results");
+
+            resultsDiv.innerHTML = `
+            <h2>ATS Match Score: ${result.score.toFixed(0)}%</h2>
+
+            <h3>Matched Skills (${result.matchedSkills.length})</h3>
+            <ul>${result.matchedSkills.map(s => `<li>${s}</li>`).join("")}</ul>
+
+            <h3>Missing Skills (${result.missingSkills.length})</h3>
+            <ul>${result.missingSkills.map(s => `<li>${s}</li>`).join("")}</ul>
+
+            <h3>Extra Skills (${result.extraSkills.length})</h3>
+            <ul>${result.extraSkills.map(s => `<li>${s}</li>`).join("")}</ul>
+
+            <h3>Suggestions</h3>
+            <ul>${result.suggestions.map(s => `<li>${s}</li>`).join("")}</ul>
+        `;
+        }
+    </script>
 
 </body>
+
 </html>
