@@ -1,36 +1,52 @@
 package com.ats.analyzer.scorer;
 
+import com.ats.analyzer.domain.Domain;
+import com.ats.analyzer.domain.DomainClassifier;
+import com.ats.analyzer.domain.DomainCompatibility;
+
 import java.util.Set;
 
 /**
- * ATS-style scoring engine.
- * 
- * Edge cases (documented as design choices):
- * 1. If JD has 0 skills → return 0
- * 2. If JD has very few skills (1-2) → score swings wildly (50% jump per skill)
- * 3. If resume matches 100% + has extras → still scores 100 (extras don't
- * penalize)
- * 
- * Design rationale:
- * - Formula prioritizes JD requirements coverage (employer perspective)
- * - Extra skills are surfaced separately, not penalized in score
- * - Small JD datasets are user error, not system bug
+ * Domain-aware ATS scoring engine.
+ * Considers job-resume domain compatibility and skill transferability.
+ * Produces human-safe scores (10-95% range, no extremes).
  */
 public class MatchScorer {
 
     /**
-     * Calculate ATS match percentage
+     * Calculate domain-aware ATS match score.
      * 
      * @param matchedSkills Skills present in both resume and JD
      * @param jdSkills      All skills from job description
-     * @return Match percentage (0-100)
+     * @param resumeSkills  All skills from resume
+     * @return ATS match score (10-95%)
      */
-    public static double calculateScore(Set<String> matchedSkills, Set<String> jdSkills) {
+    public static double calculateScore(
+            Set<String> matchedSkills,
+            Set<String> jdSkills,
+            Set<String> resumeSkills) {
+
         if (jdSkills == null || jdSkills.isEmpty()) {
             return 0.0;
         }
 
-        double score = ((double) matchedSkills.size() / jdSkills.size()) * 100;
-        return Math.min(score, 100.0); // Cap at 100
+        // 1. Detect domains
+        Domain resumeDomain = DomainClassifier.detect(resumeSkills);
+        Domain jdDomain = DomainClassifier.detect(jdSkills);
+
+        // 2. Calculate base skill match percentage
+        double skillMatchRate = (double) matchedSkills.size() / jdSkills.size();
+
+        // 3. Apply domain compatibility factor
+        double domainFactor = DomainCompatibility.factor(resumeDomain, jdDomain);
+
+        // 4. Calculate final score
+        double rawScore = skillMatchRate * domainFactor * 100;
+
+        // 5. Apply human-safe boundaries (ATS never gives extremes)
+        double finalScore = Math.max(rawScore, 10);
+        finalScore = Math.min(finalScore, 95);
+
+        return finalScore;
     }
 }

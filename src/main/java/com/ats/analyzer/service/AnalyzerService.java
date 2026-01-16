@@ -49,8 +49,12 @@ public class AnalyzerService {
             // 5. Match skills
             MatchResult matchResult = SkillMatcher.matchSkills(resumeSkills, jdSkills);
 
-            // 6. Calculate score
-            double score = MatchScorer.calculateScore(matchResult.getMatchedSkills(), jdSkills);
+            // 6. Calculate domain-aware score
+            double score = MatchScorer.calculateScore(
+                    matchResult.getMatchedSkills(),
+                    jdSkills,
+                    resumeSkills // For domain detection
+            );
 
             // 7. Generate suggestions
             List<String> suggestions = SuggestionEngine.generateSuggestions(
