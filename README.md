@@ -1,18 +1,23 @@
 # Smart Resume Analyzer - Web Interface
 
-Web wrapper for the [Smart Resume Analyzer](https://github.com/likhitha-hs543/smart-resume-analyzer) engine. This Spring Boot application exposes the analyzer via REST API and provides a browser-based UI.
+Domain-aware ATS resume analyzer that produces realistic compatibility scores across technical and non-technical roles.
 
-## Architecture
+## Scoring Philosophy
 
-```
-[ Browser (HTML/CSS/JS) ]
-          ↓
-[ Spring Boot REST API ]
-          ↓  
-[ Analyzer Engine (Framework-Agnostic) ]
-```
+This project **intentionally avoids ML models**. Instead, it uses a deterministic, domain-aware scoring system that:
 
-**Key Design**: The core analyzer logic remains framework-free. Only the service layer touches Spring.
+- **Classifies job intent** (technical vs business vs non-technical)
+- **Classifies resume profile** (technical vs mixed vs non-technical)
+- **Applies a compatibility matrix** (handles cross-domain transitions realistically)
+- **Prevents unrealistic extremes** (no 0% or 100% scores)
+
+**Why this approach?**
+- ✅ **Explainable**: Every score can be traced to specific rules
+- ✅ **Deterministic**: Same input always produces same output
+- ✅ **Realistic**: Mirrors how real ATS systems evaluate job-candidate plausibility
+- ✅ **Interview-friendly**: Easy to defend design decisions
+
+---
 
 ## Tech Stack
 
@@ -21,19 +26,12 @@ Web wrapper for the [Smart Resume Analyzer](https://github.com/likhitha-hs543/sm
 - **PDF Parsing**: Apache PDFBox 2.0.30
 - **Build**: Maven (with wrapper)
 
-## How to Run
-
-### Prerequisites
-- Java 17 or higher
-
-### Quick Start
+## Quick Start
 
 ```bash
-# Clone the repository
+# Clone and run
 git clone https://github.com/likhitha-hs543/smart-resume-analyzer-web.git
 cd smart-resume-analyzer-web
-
-# Run the application
 .\mvnw.cmd spring-boot:run
 
 # Open browser
@@ -41,113 +39,138 @@ http://localhost:8080
 ```
 
 ### Usage
-1. Upload your resume (PDF or TXT)
-2. Paste the job description
-3. Click "Analyze"
-4. View ATS score, matched/missing/extra skills, and suggestions
+1. Upload resume (PDF or TXT)
+2. Paste job description
+3. View ATS score, skill analysis, and actionable recommendations
+
+---
+
+## How It Works
+
+### 1. RoleIntent Classification
+Jobs are classified into:
+- **TECH_CORE**: SDE, AI Engineer, DevOps (skill-critical)
+- **TECH_ADJACENT**: Marketing, Business Analyst, Growth (mixed)
+- **NON_TECH**: Sales, HR, Operations (soft-skill focused)
+
+### 2. ResumeProfile Detection
+Resumes classified by technical signal count:
+- **TECHNICAL**: 5+ technical keywords
+- **MIXED**: 2-4 technical keywords  
+- **NON_TECH**: <2 technical keywords
+
+### 3. Compatibility Matrix
+Role × Resume multipliers prevent absurd scores:
+
+| Role ↓ / Resume → | TECHNICAL | MIXED | NON_TECH |
+|-------------------|-----------|-------|----------|
+| TECH_CORE         | 1.0       | 0.7   | 0.3      |
+| TECH_ADJACENT     | 0.6       | 0.8   | 0.5      |
+| NON_TECH          | 0.4       | 0.7   | 1.0      |
+
+### 4. Final Score Calculation
+```java
+skillScore = matched / (matched + missing)  // with vague JD protection
+finalScore = skillScore × compatibilityMultiplier × 100
+finalScore = clamp(finalScore, 10, 95)  // no extremes
+```
+
+**Result**: Engineering→Business gets 40% (realistic), not 0% (naive) or 100% (absurd).
+
+---
 
 ## API Documentation
 
 ### `POST /api/analyze`
 
-Analyzes resume against job description.
-
-**Request**:
-- Content-Type: `multipart/form-data`
-- Parameters:
-  - `resume`: File (PDF or TXT)
-  - `jobDescription`: String
+**Request** (`multipart/form-data`):
+- `resume`: File (PDF or TXT)
+- `jobDescription`: String
 
 **Response** (JSON):
 ```json
 {
-  "score": 33.0,
-  "matchedSkills": ["java", "sql", "git"],
-  "missingSkills": ["spring", "docker", "aws"],
-  "extraSkills": ["python", "flask"],
+  "score": 67.0,
+  "matchedSkills": ["python", "sql"],
+  "missingSkills": ["git"],
+  "extraSkills": ["java", "javascript", "html"],
   "suggestions": [
-    "Consider adding experience with: aws, docker, spring",
-    "Align your additional skills (2 found) with the job requirements"
+    "Add experience with \"git\" by mentioning it in a project or internship.",
+    "You listed 9 skills not in the job description. Consider prioritizing only the most relevant ones.",
+    "Add missing skills naturally within experience or project descriptions."
   ]
 }
 ```
 
+---
+
 ## Project Structure
 
 ```
-src/main/java/com/ats/
-├── web/
-│   ├── controller/         # REST endpoints
-│   ├── dto/               # API response models
-│   └── SmartResumeAnalyzerWebApplication.java
-└── analyzer/              # Core engine (framework-agnostic)
-    ├── input/             # Resume/JD loaders
-    ├── parser/            # Text cleaning
-    ├── extractor/         # Skill extraction
-    ├── matcher/           # Skill matching
-    ├── scorer/            # ATS scoring
-    ├── suggestion/        # Suggestion generation
-    └── service/           # Spring wrapper
+com.ats/
+├── SmartResumeAnalyzerWebApplication.java  # Main class
+├── analyzer/                               # Core engine (framework-agnostic)
+│   ├── logic/          # RoleIntent, ResumeProfile, CompatibilityMatrix
+│   ├── model/          # RoleIntent, ResumeProfile enums
+│   ├── scorer/         # Final ATS scoring engine
+│   ├── service/        # Spring wrapper
+│   └── suggestion/     # Recommendation generator
+└── web/                                    # API layer
+    ├── controller/     # REST endpoints
+    └── dto/            # Response models
 ```
-
-## Relationship to Core Analyzer
-
-This project is a **web wrapper** around the [smart-resume-analyzer](https://github.com/likhitha-hs543/smart-resume-analyzer) CLI tool. The analyzer logic was copied and repackaged under `com.ats.analyzer.*` to maintain framework independence.
-
-**Design decision**: The core logic stays frozen and framework-agnostic. Only `AnalyzerService` is Spring-aware.
-
-## What This Project Demonstrates
-
-✅ **Clean Architecture**: Separation of concerns (web layer vs. domain logic)  
-✅ **Framework Independence**: Core logic doesn't depend on Spring  
-✅ **REST API Design**: Proper endpoint structure and error handling  
-✅ **MVP Discipline**: No auth, database, or unnecessary complexity  
-✅ **Progressive Commits**: 5 deliberate commits showing incremental build  
-
-## Commit History
-
-```
-1. Initialize Spring Boot project for Smart Resume Analyzer web app
-2. Add basic HTML UI for resume analysis
-3. Integrate core analyzer logic as reusable service layer
-4. Expose resume analysis via REST API
-5. Connect frontend UI to analysis API and display results
-```
-
-Each commit represents a complete, buildable checkpoint.
-
-## Limitations (Intentional MVP Scope)
-
-- ❌ No authentication/authorization
-- ❌ No database (stateless API)
-- ❌ No user accounts or history
-- ❌ No deployment configuration
-- ❌ No UI frameworks (vanilla JS by design)
-
-These are **deliberate scope decisions** for a focused MVP, not missing features.
-
-## Future Enhancements
-
-- Error handling improvements (user-friendly messages)
-- Loading states and disabled buttons during analysis
-- File size validation before upload
-- CORS configuration for separate frontend deployment
-- Batch analysis support
-- Export results as PDF/JSON
-
-## License
-
-MIT License - feel free to use for learning and portfolio purposes.
-
-## Author
-
-Built as a portfolio project demonstrating:
-- **Reusable architecture**: Engine → API → UI
-- **Framework-agnostic design**: Core logic independent of Spring
-- **Progressive development**: Clean commit history
-- **Honest scope management**: MVP discipline
 
 ---
 
-**Interview Talking Point**:  
-*"I built the analyzer as a reusable Java engine first, then wrapped it with a Spring Boot REST API and minimal web UI. The core logic stayed framework-agnostic, making it reusable across interfaces."*
+## Design Decisions
+
+### Why Not Machine Learning?
+1. **No training data needed**: Rule-based logic works immediately
+2. **Explainable**: Can defend every score in interviews
+3. **Deterministic**: Testable and debuggable
+4. **Performance**: Instant scoring, no model loading
+
+### Why Compatibility Matrix?
+Real ATS systems don't just count keywords - they evaluate:
+- **Job domain**: Technical vs non-technical requirements
+- **Candidate background**: Engineering vs business experience
+- **Transition plausibility**: Career switches are possible but weighted differently
+
+This is the missing piece that transforms keyword matching into intelligent scoring.
+
+---
+
+## What This Demonstrates
+
+✅ **System Design Thinking**: Identified flaw in naive keyword matching  
+✅ **Clean Architecture**: Framework-agnostic core with Spring wrapper  
+✅ **Realistic Scoring**: No 0% or 100% extremes  
+✅ **Explainability First**: Rule-based over ML black boxes  
+✅ **Honest Scope Management**: MVP discipline, no feature creep  
+
+---
+
+## Intentional Limitations
+
+- ❌ No authentication (stateless MVP)
+- ❌ No database (focus on algorithm)
+- ❌ No deployment config (local development)
+- ❌ No UI framework (vanilla JS by design)
+
+These are **deliberate scope decisions** for a focused portfolio project.
+
+---
+
+## Interview Talking Point
+
+> *"The initial scorer gave 0% for business roles and 100% for coincidental keyword matches. I implemented a three-layer system: RoleIntent classification, ResumeProfile detection, and a CompatibilityMatrix that applies realistic multipliers. This mirrors how real ATS systems evaluate plausibility, not just keyword overlap. The system is deterministic and explainable - every score can be traced to specific rules."*
+
+---
+
+## License
+
+MIT License - free for learning and portfolio purposes.
+
+## Author
+
+Built as a portfolio project demonstrating advanced system design thinking and realistic ATS scoring logic.
