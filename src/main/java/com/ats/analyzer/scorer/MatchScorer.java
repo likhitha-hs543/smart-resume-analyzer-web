@@ -46,6 +46,21 @@ public class MatchScorer {
         RoleIntent roleIntent = RoleIntentDetector.detect(jobDescription);
         ResumeProfile resumeProfile = ResumeProfileDetector.detect(resumeText);
 
+        // === DEBUG OUTPUT (remove in production) ===
+        System.out.println("\n========== ATS SCORING DEBUG ==========");
+        System.out.println("📋 JOB ANALYSIS:");
+        System.out.println("  Role Intent: " + roleIntent);
+        System.out.println("  Resume Profile: " + resumeProfile);
+        System.out.println("\n📊 SKILLS BREAKDOWN:");
+        System.out.println("  Matched (" + matchedSkills.size() + "): " + matchedSkills);
+        System.out.println("  Missing (" + missingSkills.size() + "): " + missingSkills);
+
+        // Identify core skills for debug
+        Set<String> coreMatched = SkillClassifier.identifyCoreSkills(matchedSkills, roleIntent);
+        Set<String> coreMissing = SkillClassifier.identifyCoreSkills(missingSkills, roleIntent);
+        System.out.println("  Core Matched (" + coreMatched.size() + "): " + coreMatched);
+        System.out.println("  Core Missing (" + coreMissing.size() + "): " + coreMissing);
+
         // 2. Calculate skill match score with importance weighting
         double skillScore = calculateWeightedSkillScore(
                 matchedSkills, missingSkills, roleIntent);
@@ -63,6 +78,14 @@ public class MatchScorer {
         // 6. Apply human-safe boundaries (more realistic upper bound)
         int finalScore = (int) Math.round(rawScore);
         finalScore = Math.max(10, Math.min(92, finalScore));
+
+        // === CONTINUE DEBUG ===
+        System.out.println("\n🧮 SCORE CALCULATION:");
+        System.out.println("  Skill Score: " + String.format("%.3f", skillScore));
+        System.out.println("  Compatibility: " + String.format("%.3f", compatibilityFactor));
+        System.out.println("  Raw Score: " + String.format("%.2f", rawScore));
+        System.out.println("  Final Score: " + finalScore + "%");
+        System.out.println("=======================================\n");
 
         return finalScore;
     }
