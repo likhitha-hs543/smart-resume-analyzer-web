@@ -27,10 +27,17 @@ public class SkillClassifier {
             "communication", "sales", "negotiation", "excel",
             "presentation", "crm", "analytical", "business-development");
 
-    // Core skills for marketing roles
+    // Core skills for marketing roles (note: google-analytics, not generic
+    // "analytics")
     private static final Set<String> CORE_MARKETING_SKILLS = Set.of(
-            "marketing", "seo", "content", "analytics",
+            "marketing", "seo", "content", "google-analytics",
             "communication", "email-marketing", "digital-marketing");
+
+    // Core skills for UI/UX design roles (NOT development)
+    private static final Set<String> CORE_DESIGN_SKILLS = Set.of(
+            "figma", "adobe-xd", "sketch", "user-experience", "user-interface",
+            "wireframing", "prototyping", "user-research", "usability",
+            "design-systems", "visual-design");
 
     /**
      * Identify which skills are CORE (critical) based on role intent.
@@ -57,6 +64,13 @@ public class SkillClassifier {
     private static boolean isCoreSkill(String skill, RoleIntent roleIntent) {
         String normalized = skill.toLowerCase();
 
+        // SPECIAL CASE: HTML/CSS are NOT core for design/marketing roles
+        // They're frontend dev skills, not designer skills
+        if ((normalized.equals("html") || normalized.equals("css")) &&
+                roleIntent == RoleIntent.TECH_ADJACENT) {
+            return false; // Not core for design/marketing roles
+        }
+
         return switch (roleIntent) {
             case TECH_CORE -> {
                 // Check if it's a core tech OR core AI skill
@@ -66,9 +80,10 @@ public class SkillClassifier {
                 yield false;
             }
             case TECH_ADJACENT -> {
-                // Marketing/Product roles: mix of tech + business skills
+                // Marketing/Product/Design roles: mix of marketing, business, AND design skills
                 yield CORE_MARKETING_SKILLS.contains(normalized) ||
-                        CORE_BUSINESS_SKILLS.contains(normalized);
+                        CORE_BUSINESS_SKILLS.contains(normalized) ||
+                        CORE_DESIGN_SKILLS.contains(normalized);
             }
             case NON_TECH -> {
                 // Business/Sales roles: focus on soft skills

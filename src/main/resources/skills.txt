@@ -1,3 +1,6 @@
+# ===================================
+# PROGRAMMING LANGUAGES
+# ===================================
 java
 python
 javascript
@@ -13,6 +16,10 @@ swift
 kotlin
 scala
 sql
+
+# ===================================
+# WEB TECHNOLOGIES
+# ===================================
 html
 css
 react
@@ -26,6 +33,10 @@ django
 flask
 fastapi
 dotnet
+
+# ===================================
+# DEVOPS & INFRASTRUCTURE
+# ===================================
 docker
 kubernetes
 jenkins
@@ -34,23 +45,37 @@ github
 git
 maven
 gradle
+terraform
+ansible
+devops
+cicd
+ci-cd
+continuous-integration
+continuous-deployment
+
+# ===================================
+# CLOUD PLATFORMS
+# ===================================
 aws
 azure
 gcp
+cloud-computing
+
+# ===================================
+# DATABASES
+# ===================================
 mysql
 postgresql
 mongodb
 redis
 cassandra
 elasticsearch
+
+# ===================================
+# MESSAGING & APIS
+# ===================================
 kafka
 rabbitmq
-nginx
-apache
-linux
-unix
-bash
-powershell
 rest
 graphql
 soap
@@ -58,12 +83,37 @@ microservices
 api
 oauth
 jwt
+
+# ===================================
+# WEB SERVERS
+# ===================================
+nginx
+apache
+
+# ===================================
+# OPERATING SYSTEMS & SHELLS
+# ===================================
+linux
+unix
+bash
+powershell
+
+# ===================================
+# TESTING FRAMEWORKS
+# ===================================
 junit
 pytest
 selenium
 cypress
 jest
 mocha
+testing
+unit-testing
+integration-testing
+
+# ===================================
+# AI/ML FRAMEWORKS
+# ===================================
 tensorflow
 pytorch
 pandas
@@ -73,43 +123,81 @@ opencv
 nlp
 ml
 ai
-agile
-scrum
-kanban
-jira
-confluence
-devops
-cicd
-terraform
-ansible
-prometheus
-grafana
-splunk
+llm
+large-language-model
+large-language-models
+prompt-engineering
+gpt
+chatgpt
+generative-ai
+genai
+fine-tuning
+transformers
+huggingface
+
+# ===================================
+# DATA ENGINEERING
+# ===================================
 databricks
 spark
 hadoop
 hive
 airflow
+big-data
+
+# ===================================
+# MONITORING & LOGGING
+# ===================================
+prometheus
+grafana
+splunk
+monitoring
+
+# ===================================
+# BI & ANALYTICS TOOLS (PLATFORMS ONLY)
+# ===================================
 tableau
 powerbi
 looker
+google-analytics
+data-analytics
+web-analytics
+business-analytics
 
-# Communication & Soft Skills
-communication
-presentation
-excel
-spreadsheet
+# ===================================
+# SOFT SKILLS - ANALYTICAL CATEGORY
+# ===================================
 analytical
+analytical-thinking
+analytical-skills
+analytical-mindset
+critical-thinking
 problem-solving
-leadership
-teamwork
-collaboration
-negotiation
+logical-thinking
+
+# ===================================
+# SOFT SKILLS - COMMUNICATION
+# ===================================
+communication
+written-communication
+verbal-communication
+presentation
 interpersonal
 written
 verbal
 
-# Business & Sales Skills
+# ===================================
+# SOFT SKILLS - BUSINESS & LEADERSHIP
+# ===================================
+leadership
+collaboration
+teamwork
+negotiation
+adaptability
+
+# ===================================
+# BUSINESS & SALES SKILLS
+# ===================================
 sales
 marketing
 business-development
@@ -123,35 +211,82 @@ outreach
 cold-calling
 pipeline
 
-# Marketing Skills
+# ===================================
+# MARKETING SKILLS
+# ===================================
 seo
 content
 email-marketing
 digital-marketing
 social-media
-analytics
-google-analytics
 campaign
 brand
 copywriting
 
-# General Tools
-ms-office
-powerpoint
-word
+# ===================================
+# OFFICE & PRODUCTIVITY TOOLS
+# ===================================
+excel
+ms-excel
+microsoft-excel
+spreadsheet
 sheets
+word
+ms-word
+powerpoint
+ppt
+ms-powerpoint
+ms-office
 office
 
-# Software Engineering Fundamentals
+# ===================================
+# UI/UX DESIGN TOOLS
+# ===================================
+figma
+adobe-xd
+sketch
+user-experience
+user-interface
+wireframing
+prototyping
+user-research
+usability
+design-systems
+visual-design
+
+# ===================================
+# SOFTWARE ENGINEERING FUNDAMENTALS
+# ===================================
 dsa
 data-structures
+data-structures-algorithms
 algorithms
 debugging
-testing
 code-review
-unit-testing
-
-# Development Practices
-version-control
+refactoring
+optimization
+scalability
 clean-code
+best-practices
 design-patterns
+
+# ===================================
+# AGILE & PROJECT MANAGEMENT
+# ===================================
+agile
+scrum
+kanban
+jira
+confluence
+
+# ===================================
+# VERSION CONTROL
+# ===================================
+version-control
+
+# ===================================
+# CLOUD & INFRASTRUCTURE CONCEPTS
+# ===================================
+automation
+deployment
+infrastructure
