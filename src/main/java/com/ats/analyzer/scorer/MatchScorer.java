@@ -3,25 +3,30 @@ package com.ats.analyzer.scorer;
 import com.ats.analyzer.logic.CompatibilityMatrix;
 import com.ats.analyzer.logic.ResumeProfileDetector;
 import com.ats.analyzer.logic.RoleIntentDetector;
+import com.ats.analyzer.logic.SkillClassifier;
 import com.ats.analyzer.model.ResumeProfile;
 import com.ats.analyzer.model.RoleIntent;
 
 import java.util.Set;
 
 /**
- * Final ATS scoring engine with domain-aware logic.
- * Produces realistic scores (10-95%) that consider both skill match AND role
- * compatibility.
+ * Final ATS scoring engine with domain-aware logic and skill importance
+ * weighting.
+ * Produces realistic scores (10-95%) that consider:
+ * 1. Skill match (with core skill priority)
+ * 2. Role compatibility
  * 
  * Design Philosophy:
  * - Deterministic (no ML)
  * - Explainable (rule-based)
  * - Realistic (no 0% or 100% extremes)
+ * - Fair (core skills weighted more than nice-to-have)
  */
 public class MatchScorer {
 
     /**
-     * Calculate complete ATS match score with role compatibility.
+     * Calculate complete ATS match score with role compatibility and skill
+     * weighting.
      * 
      * @param matchedSkills  Skills present in both resume and JD
      * @param missingSkills  Skills in JD but not in resume
@@ -41,18 +46,9 @@ public class MatchScorer {
         RoleIntent roleIntent = RoleIntentDetector.detect(jobDescription);
         ResumeProfile resumeProfile = ResumeProfileDetector.detect(resumeText);
 
-        // 2. Calculate skill match score with vague JD protection
-        double skillScore;
-        int totalSignals = matchedSkills.size() + missingSkills.size();
-
-        if (totalSignals < 3) {
-            // Vague or non-technical JD (e.g., business/sales roles)
-            // Give a baseline score to avoid division by zero
-            skillScore = 0.4;
-        } else {
-            // Normal case: calculate match rate
-            skillScore = (double) matchedSkills.size() / totalSignals;
-        }
+        // 2. Calculate skill match score with importance weighting
+        double skillScore = calculateWeightedSkillScore(
+                matchedSkills, missingSkills, roleIntent);
 
         // 3. Clamp skill score to realistic range (prevent extremes)
         skillScore = Math.max(0.25, Math.min(0.85, skillScore));
@@ -69,5 +65,43 @@ public class MatchScorer {
         finalScore = Math.max(10, Math.min(95, finalScore));
 
         return finalScore;
+    }
+
+    /**
+     * Calculate skill score with importance weighting.
+     * Core skills are weighted more heavily than nice-to-have skills.
+     */
+    private static double calculateWeightedSkillScore(
+            Set<String> matchedSkills,
+            Set<String> missingSkills,
+            RoleIntent roleIntent) {
+
+        int totalSignals = matchedSkills.size() + missingSkills.size();
+
+        // Handle vague JDs (very few skills mentioned)
+        if (totalSignals < 3) {
+            return 0.4; // Baseline score for vague JDs
+        }
+
+        // Classify skills as CORE vs SECONDARY
+        Set<String> coreMatched = SkillClassifier.identifyCoreSkills(matchedSkills, roleIntent);
+        Set<String> coreMissing = SkillClassifier.identifyCoreSkills(missingSkills, roleIntent);
+
+        int totalCoreSkills = coreMatched.size() + coreMissing.size();
+
+        // If there are core skills mentioned, prioritize them
+        if (totalCoreSkills > 0) {
+            // Core skill match rate (weighted 70%)
+            double coreMatchRate = (double) coreMatched.size() / totalCoreSkills;
+
+            // Overall skill match rate (weighted 30%)
+            double overallMatchRate = (double) matchedSkills.size() / totalSignals;
+
+            // Weighted combination: core skills matter more
+            return (coreMatchRate * 0.7) + (overallMatchRate * 0.3);
+        } else {
+            // No core skills detected - use simple match rate
+            return (double) matchedSkills.size() / totalSignals;
+        }
     }
 }

@@ -93,3 +93,52 @@ airflow
 tableau
 powerbi
 looker
+
+# Communication & Soft Skills
+communication
+presentation
+excel
+spreadsheet
+analytical
+problem-solving
+leadership
+teamwork
+collaboration
+negotiation
+interpersonal
+written
+verbal
+
+# Business & Sales Skills
+sales
+marketing
+business-development
+crm
+salesforce
+revenue
+growth
+customer-acquisition
+lead-generation
+conversion
+outreach
+cold-calling
+pipeline
+
+# Marketing Skills
+seo
+content
+email-marketing
+digital-marketing
+social-media
+analytics
+google-analytics
+campaign
+brand
+copywriting
+
+# General Tools
+ms-office
+powerpoint
+word
+sheets
+office
