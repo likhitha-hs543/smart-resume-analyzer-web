@@ -49,11 +49,12 @@ public class AnalyzerService {
             // 5. Match skills
             MatchResult matchResult = SkillMatcher.matchSkills(resumeSkills, jdSkills);
 
-            // 6. Calculate domain-aware score
+            // 6. Calculate RoleIntent-aware score
             double score = MatchScorer.calculateScore(
                     matchResult.getMatchedSkills(),
-                    jdSkills,
-                    resumeSkills // For domain detection
+                    matchResult.getMissingSkills(),
+                    matchResult.getExtraSkills(),
+                    jobDescription // Pass original JD text for RoleIntent detection
             );
 
             // 7. Generate suggestions
