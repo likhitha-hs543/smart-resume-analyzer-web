@@ -10,22 +10,10 @@ import com.ats.analyzer.model.RoleIntent;
 import java.util.Set;
 
 /**
- * Final ATS scoring engine with complete domain-aware logic.
- * Includes: skill weighting, role compatibility, design penalties, perfect core
- * bonus.
+ * Final ATS scoring engine with emergency fixes applied.
  */
 public class MatchScorer {
 
-    /**
-     * Calculate complete ATS match score.
-     * 
-     * @param matchedSkills  Skills present in both resume and JD
-     * @param missingSkills  Skills in JD but not in resume
-     * @param extraSkills    Skills in resume but not in JD (not used in scoring)
-     * @param jobDescription Full job description text
-     * @param resumeText     Full resume text
-     * @return ATS match score (10-90%)
-     */
     public static double calculateScore(
             Set<String> matchedSkills,
             Set<String> missingSkills,
@@ -54,12 +42,25 @@ public class MatchScorer {
         System.out.println("  Core Matched (" + coreMatched.size() + "): " + coreMatched);
         System.out.println("  Core Missing (" + coreMissing.size() + "): " + coreMissing);
 
-        // 2. Calculate skill match score with importance weighting
+        // 2. Calculate skill match score
         double skillScore = calculateWeightedSkillScore(
                 matchedSkills, missingSkills, roleIntent);
 
-        // 3. Clamp skill score to realistic range (tighter bounds)
-        skillScore = Math.max(0.18, Math.min(0.76, skillScore));
+        // === DETAILED DEBUG ===
+        System.out.println("\n  🔍 DETAILED BREAKDOWN:");
+        System.out.println("    Total Matched: " + matchedSkills.size() + " / Total Signals: "
+                + (matchedSkills.size() + missingSkills.size()));
+        System.out.println("    Core Matched: " + coreMatched.size() + " → " + coreMatched);
+        System.out.println("    Core Missing: " + coreMissing.size() + " → " + coreMissing);
+
+        if (coreMatched.size() + coreMissing.size() > 0) {
+            double coreRate = (double) coreMatched.size() / (coreMatched.size() + coreMissing.size());
+            System.out.println("    Core Match Rate: " + String.format("%.2f%%", coreRate * 100));
+        }
+        System.out.println("    Skill Score (before clamp): " + String.format("%.4f", skillScore));
+
+        // 3. Clamp skill score (adjusted ranges)
+        skillScore = Math.max(0.20, Math.min(0.82, skillScore));
 
         // 4. Apply role×resume compatibility multiplier
         double compatibilityFactor = CompatibilityMatrix.compatibilityMultiplier(
@@ -67,20 +68,20 @@ public class MatchScorer {
 
         // 5. Apply design role penalty if applicable
         if (isDesignRole && resumeProfile == ResumeProfile.TECHNICAL) {
-            compatibilityFactor *= 0.35; // Heavy penalty: dev skills ≠ design skills
+            compatibilityFactor *= 0.35;
             System.out.println("  ⚠️  Design Penalty Applied (0.35x)");
         }
 
         // 6. Calculate final score
         double rawScore = skillScore * compatibilityFactor * 100;
 
-        // 7. Apply human-safe boundaries (realistic upper cap)
+        // 7. Apply human-safe boundaries (adjusted cap)
         int finalScore = (int) Math.round(rawScore);
-        finalScore = Math.max(10, Math.min(90, finalScore));
+        finalScore = Math.max(10, Math.min(95, finalScore));
 
         // === CONTINUE DEBUG ===
         System.out.println("\n🧮 SCORE CALCULATION:");
-        System.out.println("  Skill Score: " + String.format("%.3f", skillScore));
+        System.out.println("  Skill Score (after clamp): " + String.format("%.3f", skillScore));
         System.out.println("  Compatibility: " + String.format("%.3f", compatibilityFactor));
         System.out.println("  Raw Score: " + String.format("%.2f", rawScore));
         System.out.println("  Final Score: " + finalScore + "%");
@@ -89,10 +90,6 @@ public class MatchScorer {
         return finalScore;
     }
 
-    /**
-     * Calculate skill score with importance weighting.
-     * Includes perfect core bonus for strong matches.
-     */
     private static double calculateWeightedSkillScore(
             Set<String> matchedSkills,
             Set<String> missingSkills,
@@ -100,9 +97,9 @@ public class MatchScorer {
 
         int totalSignals = matchedSkills.size() + missingSkills.size();
 
-        // Handle vague JDs (very few skills mentioned)
+        // Handle vague JDs
         if (totalSignals < 3) {
-            return 0.30; // Reduced baseline for vague JDs
+            return 0.30;
         }
 
         // Classify skills as CORE vs SECONDARY
@@ -111,7 +108,6 @@ public class MatchScorer {
 
         int totalCoreSkills = coreMatched.size() + coreMissing.size();
 
-        // If there are core skills mentioned, prioritize them
         if (totalCoreSkills > 0) {
             // Core skill match rate
             double coreMatchRate = (double) coreMatched.size() / totalCoreSkills;
@@ -122,21 +118,20 @@ public class MatchScorer {
             // Blended weighted score: core 60%, overall 40%
             double weightedScore = (coreMatchRate * 0.60) + (overallMatchRate * 0.40);
 
-            // Penalty: if missing significantly more skills than matched
+            // Penalty: if missing 2x+ more skills
             if (missingSkills.size() > matchedSkills.size() * 2) {
-                weightedScore *= 0.85; // 15% penalty
+                weightedScore *= 0.85;
             }
 
-            // Bonus: Perfect/near-perfect core match (95%+) AND at least 4 core skills
-            // Prevents gaming with 1/1 core match
+            // INCREASED BONUS: Perfect/near-perfect core match
             if (coreMatchRate >= 0.95 && coreMatched.size() >= 4) {
-                weightedScore = Math.min(0.76, weightedScore * 1.08); // 8% bonus, capped
-                System.out.println("  ✨ Perfect Core Bonus Applied (+8%)");
+                weightedScore = Math.min(0.82, weightedScore * 1.15); // Increased bonus
+                System.out.println("    ✨ Perfect Core Bonus Applied (+15%)");
             }
 
             return weightedScore;
         } else {
-            // No core skills detected - use simple match rate
+            // No core skills detected
             return (double) matchedSkills.size() / totalSignals;
         }
     }
