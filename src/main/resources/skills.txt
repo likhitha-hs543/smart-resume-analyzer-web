@@ -119,7 +119,6 @@ revenue
 growth
 customer-acquisition
 lead-generation
-conversion
 outreach
 cold-calling
 pipeline

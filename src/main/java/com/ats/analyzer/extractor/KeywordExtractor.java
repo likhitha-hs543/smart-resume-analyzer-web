@@ -22,7 +22,7 @@ public class KeywordExtractor {
     // Cached skill whitelist loaded once from resources
     private static final Set<String> SKILL_WHITELIST = loadSkillWhitelist();
 
-    // Hardcoded stop words list
+    // Hardcoded stop words list (common words + HR/business terms)
     private static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(
             "a", "an", "and", "are", "as", "at", "be", "by", "for",
             "from", "has", "he", "in", "is", "it", "its", "of", "on",
@@ -35,7 +35,12 @@ public class KeywordExtractor {
             "development", "developer", "project", "projects", "responsible",
             "responsibilities", "using", "used", "including", "ability",
             "knowledge", "understanding", "years", "months", "skills",
-            "skill", "strong", "good", "excellent", "proficient"));
+            "skill", "strong", "good", "excellent", "proficient",
+            // Added: common business/HR terms that aren't skills
+            "conversion", "performance", "familiarity", "pursuing", "completed",
+            "degree", "bachelor", "master", "internship", "full-time", "part-time",
+            "fresher", "candidate", "applicant", "required", "preferred", "mandatory",
+            "responsibility", "qualification", "opportunity", "benefit", "package"));
 
     /**
      * Extract skills from resume text

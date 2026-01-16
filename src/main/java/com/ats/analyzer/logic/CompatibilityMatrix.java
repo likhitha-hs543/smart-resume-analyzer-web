@@ -23,14 +23,14 @@ public class CompatibilityMatrix {
 
         return switch (role) {
             case TECH_CORE -> switch (profile) {
-                case TECHNICAL -> 1.0; // Perfect match
+                case TECHNICAL -> 0.95; // Reduced from 1.0 to prevent inflation
                 case MIXED -> 0.7; // Decent fit
                 case NON_TECH -> 0.3; // Weak fit
             };
 
             case TECH_ADJACENT -> switch (profile) {
-                case TECHNICAL -> 0.6; // Overqualified technically, but can work
-                case MIXED -> 0.8; // Good fit
+                case TECHNICAL -> 0.55; // Reduced from 0.6
+                case MIXED -> 0.75; // Reduced from 0.8
                 case NON_TECH -> 0.5; // Acceptable
             };
 

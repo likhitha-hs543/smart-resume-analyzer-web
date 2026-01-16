@@ -6,8 +6,8 @@ import java.util.Set;
 
 /**
  * Detects job role intent from job description text.
- * Uses keyword matching to classify roles into TECH_CORE, TECH_ADJACENT, or
- * NON_TECH.
+ * Uses keyword matching with threshold-based classification to prevent
+ * misclassification.
  */
 public class RoleIntentDetector {
 
@@ -24,6 +24,7 @@ public class RoleIntentDetector {
 
     /**
      * Detects role intent from job description text.
+     * Uses prioritized keyword matching with conflict resolution.
      * 
      * @param jobDescription Full text of job description
      * @return Detected RoleIntent
@@ -31,18 +32,36 @@ public class RoleIntentDetector {
     public static RoleIntent detect(String jobDescription) {
         String jd = jobDescription.toLowerCase();
 
-        if (containsAny(jd, TECH_CORE_KEYWORDS)) {
+        // Count matches for each category
+        int techCoreCount = countMatches(jd, TECH_CORE_KEYWORDS);
+        int techAdjacentCount = countMatches(jd, TECH_ADJACENT_KEYWORDS);
+
+        // Decision logic with threshold
+        // If primarily tech keywords → TECH_CORE
+        if (techCoreCount >= 3 && techCoreCount > techAdjacentCount * 2) {
             return RoleIntent.TECH_CORE;
         }
 
-        if (containsAny(jd, TECH_ADJACENT_KEYWORDS)) {
+        // If mixed but more adjacent → TECH_ADJACENT
+        if (techAdjacentCount >= 2) {
             return RoleIntent.TECH_ADJACENT;
         }
 
+        // If some tech keywords but not dominant → TECH_ADJACENT
+        if (techCoreCount >= 2 && techCoreCount <= 4) {
+            return RoleIntent.TECH_ADJACENT;
+        }
+
+        // If strong tech core keywords → TECH_CORE
+        if (techCoreCount >= 5) {
+            return RoleIntent.TECH_CORE;
+        }
+
+        // Default to NON_TECH
         return RoleIntent.NON_TECH;
     }
 
-    private static boolean containsAny(String text, Set<String> keywords) {
-        return keywords.stream().anyMatch(text::contains);
+    private static int countMatches(String text, Set<String> keywords) {
+        return (int) keywords.stream().filter(text::contains).count();
     }
 }
