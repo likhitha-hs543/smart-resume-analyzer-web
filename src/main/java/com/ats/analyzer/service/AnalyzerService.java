@@ -49,12 +49,13 @@ public class AnalyzerService {
             // 5. Match skills
             MatchResult matchResult = SkillMatcher.matchSkills(resumeSkills, jdSkills);
 
-            // 6. Calculate RoleIntent-aware score
+            // 6. Calculate complete ATS score (skill match + role compatibility)
             double score = MatchScorer.calculateScore(
                     matchResult.getMatchedSkills(),
                     matchResult.getMissingSkills(),
                     matchResult.getExtraSkills(),
-                    jobDescription // Pass original JD text for RoleIntent detection
+                    jobDescription, // For RoleIntent detection
+                    resumeText // For ResumeProfile detection
             );
 
             // 7. Generate suggestions

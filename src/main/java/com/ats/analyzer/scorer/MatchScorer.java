@@ -1,59 +1,69 @@
 package com.ats.analyzer.scorer;
 
+import com.ats.analyzer.logic.CompatibilityMatrix;
+import com.ats.analyzer.logic.ResumeProfileDetector;
 import com.ats.analyzer.logic.RoleIntentDetector;
 import com.ats.analyzer.logic.SkillWeightingPolicy;
+import com.ats.analyzer.model.ResumeProfile;
 import com.ats.analyzer.model.RoleIntent;
 
 import java.util.Set;
 
 /**
- * RoleIntent-aware ATS scoring engine.
- * Considers job type (technical vs business) and applies appropriate skill
- * weighting.
- * Produces realistic scores (no 0% or 100% extremes).
+ * Complete ATS scoring engine with RoleIntent and ResumeProfile compatibility.
+ * Produces realistic scores that consider both skill match AND role
+ * plausibility.
  */
 public class MatchScorer {
 
     /**
-     * Calculate RoleIntent-aware ATS match score.
+     * Calculate complete ATS match score with role compatibility.
      * 
      * @param matchedSkills  Skills present in both resume and JD
      * @param missingSkills  Skills in JD but not in resume
      * @param extraSkills    Skills in resume but not in JD
-     * @param jobDescription Full job description text for intent detection
+     * @param jobDescription Full job description text
+     * @param resumeText     Full resume text
      * @return ATS match score (10-95%)
      */
     public static double calculateScore(
             Set<String> matchedSkills,
             Set<String> missingSkills,
             Set<String> extraSkills,
-            String jobDescription) {
+            String jobDescription,
+            String resumeText) {
 
-        // 1. Detect role intent from JD
-        RoleIntent intent = RoleIntentDetector.detect(jobDescription);
+        // 1. Detect role intent and resume profile
+        RoleIntent roleIntent = RoleIntentDetector.detect(jobDescription);
+        ResumeProfile resumeProfile = ResumeProfileDetector.detect(resumeText);
 
         // 2. Calculate total relevant skills
         int totalRelevant = matchedSkills.size() + missingSkills.size();
         if (totalRelevant == 0) {
-            return SkillWeightingPolicy.minimumScoreFloor(intent);
+            return CompatibilityMatrix.minimumFloor(roleIntent);
         }
 
-        // 3. Calculate base match rate
+        // 3. Calculate base skill match rate
         double matchRate = (double) matchedSkills.size() / totalRelevant;
 
-        // 4. Apply role-specific core skill weight
-        double coreScore = matchRate * SkillWeightingPolicy.coreSkillWeight(intent);
+        // 4. Apply role-specific skill weight
+        double coreScore = matchRate * SkillWeightingPolicy.coreSkillWeight(roleIntent);
 
-        // 5. Calculate and apply missing skill penalty
+        // 5. Calculate missing skill penalty
         double missingRate = (double) missingSkills.size() / totalRelevant;
-        double penalty = missingRate * SkillWeightingPolicy.toolPenalty(intent);
+        double penalty = missingRate * SkillWeightingPolicy.toolPenalty(roleIntent);
 
-        // 6. Calculate raw score
-        double rawScore = (coreScore - penalty) * 100;
+        // 6. Calculate skill-only score
+        double skillScore = (coreScore - penalty) * 100;
 
-        // 7. Apply minimum floor and cap at 95% (no perfect scores)
-        int finalScore = (int) Math.round(rawScore);
-        finalScore = Math.max(finalScore, SkillWeightingPolicy.minimumScoreFloor(intent));
+        // 7. Apply role×resume compatibility multiplier (THE KEY FIX)
+        double compatibilityFactor = CompatibilityMatrix.compatibilityMultiplier(
+                roleIntent, resumeProfile);
+        double adjustedScore = skillScore * compatibilityFactor;
+
+        // 8. Apply minimum floor and cap at 95%
+        int finalScore = (int) Math.round(adjustedScore);
+        finalScore = Math.max(finalScore, CompatibilityMatrix.minimumFloor(roleIntent));
         finalScore = Math.min(finalScore, 95);
 
         return finalScore;
