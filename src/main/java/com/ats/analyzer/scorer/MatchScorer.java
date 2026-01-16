@@ -50,8 +50,8 @@ public class MatchScorer {
         double skillScore = calculateWeightedSkillScore(
                 matchedSkills, missingSkills, roleIntent);
 
-        // 3. Clamp skill score to realistic range (prevent extremes)
-        skillScore = Math.max(0.25, Math.min(0.85, skillScore));
+        // 3. Clamp skill score to realistic range (tighter bounds to prevent inflation)
+        skillScore = Math.max(0.20, Math.min(0.78, skillScore));
 
         // 4. Apply role×resume compatibility multiplier
         double compatibilityFactor = CompatibilityMatrix.compatibilityMultiplier(
@@ -60,9 +60,9 @@ public class MatchScorer {
         // 5. Calculate final score
         double rawScore = skillScore * compatibilityFactor * 100;
 
-        // 6. Apply human-safe boundaries (ATS never gives extremes)
+        // 6. Apply human-safe boundaries (more realistic upper bound)
         int finalScore = (int) Math.round(rawScore);
-        finalScore = Math.max(10, Math.min(95, finalScore));
+        finalScore = Math.max(10, Math.min(92, finalScore));
 
         return finalScore;
     }
@@ -70,6 +70,7 @@ public class MatchScorer {
     /**
      * Calculate skill score with importance weighting.
      * Core skills are weighted more heavily than nice-to-have skills.
+     * Applies penalty if missing too many secondary skills.
      */
     private static double calculateWeightedSkillScore(
             Set<String> matchedSkills,
@@ -80,7 +81,7 @@ public class MatchScorer {
 
         // Handle vague JDs (very few skills mentioned)
         if (totalSignals < 3) {
-            return 0.4; // Baseline score for vague JDs
+            return 0.35; // Reduced from 0.4 for more realistic baseline
         }
 
         // Classify skills as CORE vs SECONDARY
@@ -91,14 +92,24 @@ public class MatchScorer {
 
         // If there are core skills mentioned, prioritize them
         if (totalCoreSkills > 0) {
-            // Core skill match rate (weighted 70%)
+            // Core skill match rate
             double coreMatchRate = (double) coreMatched.size() / totalCoreSkills;
 
-            // Overall skill match rate (weighted 30%)
+            // Overall skill match rate
             double overallMatchRate = (double) matchedSkills.size() / totalSignals;
 
-            // Weighted combination: core skills matter more
-            return (coreMatchRate * 0.7) + (overallMatchRate * 0.3);
+            // Blended weighted score with adjusted weights
+            // Core skills: 60% (reduced from 70% to prevent over-inflation)
+            // Overall skills: 40% (increased from 30%)
+            double weightedScore = (coreMatchRate * 0.6) + (overallMatchRate * 0.4);
+
+            // Apply penalty if missing too many secondary skills
+            // Even if core skills match 100%, missing 2x+ more skills should hurt
+            if (missingSkills.size() > matchedSkills.size() * 2) {
+                weightedScore *= 0.85; // 15% penalty for too many gaps
+            }
+
+            return weightedScore;
         } else {
             // No core skills detected - use simple match rate
             return (double) matchedSkills.size() / totalSignals;

@@ -141,3 +141,17 @@ powerpoint
 word
 sheets
 office
+
+# Software Engineering Fundamentals
+dsa
+data-structures
+algorithms
+debugging
+testing
+code-review
+unit-testing
+
+# Development Practices
+version-control
+clean-code
+design-patterns
