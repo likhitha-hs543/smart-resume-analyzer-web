@@ -160,23 +160,45 @@ class AnalyzerControllerTest {
                                 .andExpect(status().isBadRequest());
         }
 
-        // @Test
-        // @DisplayName("POST /api/analyze - Should reject request with empty job
-        // description")
-        // void testAnalyze_WithEmptyJobDescription_Returns400() throws Exception {
-        // // TODO: Re-enable when @ExceptionHandler is added to controller (Phase 3)
-        // // Currently throws ServletException in test environment
-        // // Service validation works - IllegalArgumentException is thrown correctly
-        // }
+        @Test
+        @DisplayName("POST /api/analyze - Should reject request with empty job description")
+        void testAnalyze_WithEmptyJobDescription_Returns400() throws Exception {
+                // Arrange
+                MockMultipartFile resumeFile = new MockMultipartFile(
+                                "resume",
+                                "resume.txt",
+                                "text/plain",
+                                TestConstants.SAMPLE_BACKEND_RESUME.getBytes());
 
-        // @Test
-        // @DisplayName("POST /api/analyze - Should handle empty resume file
-        // gracefully")
-        // void testAnalyze_WithEmptyResumeFile_ReturnsLowScore() throws Exception {
-        // // TODO: Re-enable when @ExceptionHandler is added to controller (Phase 3)
-        // // Currently throws ServletException in test environment
-        // // Service validation works - IllegalArgumentException is thrown correctly
-        // }
+                // Act & Assert - GlobalExceptionHandler now provides clean 400 response
+                mockMvc.perform(multipart("/api/analyze")
+                                .file(resumeFile)
+                                .param("jobDescription", ""))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error").value("Invalid Input"))
+                                .andExpect(jsonPath("$.message").exists())
+                                .andExpect(jsonPath("$.status").value("400"));
+        }
+
+        @Test
+        @DisplayName("POST /api/analyze - Should handle empty resume file")
+        void testAnalyze_WithEmptyResumeFile_Returns400() throws Exception {
+                // Arrange
+                MockMultipartFile emptyResume = new MockMultipartFile(
+                                "resume",
+                                "empty.txt",
+                                "text/plain",
+                                "".getBytes());
+
+                // Act & Assert - GlobalExceptionHandler now provides clean 400 response
+                mockMvc.perform(multipart("/api/analyze")
+                                .file(emptyResume)
+                                .param("jobDescription", TestConstants.SAMPLE_JD_BACKEND))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error").value("Invalid Input"))
+                                .andExpect(jsonPath("$.message").exists())
+                                .andExpect(jsonPath("$.status").value("400"));
+        }
 
         // ========================================
         // FILE HANDLING TESTS
@@ -190,13 +212,23 @@ class AnalyzerControllerTest {
         // // In test environment, large files are processed successfully
         // }
 
-        // @Test
-        // @DisplayName("POST /api/analyze - Should handle unsupported file type")
-        // void testAnalyze_WithUnsupportedFileType_ReturnsError() throws Exception {
-        // // TODO: Re-enable when @ExceptionHandler is added to controller (Phase 3)
-        // // Currently throws ServletException in test environment
-        // // Service validation works - RuntimeException is thrown correctly
-        // }
+        @Test
+        @DisplayName("POST /api/analyze - Should handle unsupported file type")
+        void testAnalyze_WithUnsupportedFileType_ReturnsError() throws Exception {
+                // Arrange
+                MockMultipartFile imageFile = new MockMultipartFile(
+                                "resume",
+                                "resume.jpg",
+                                "image/jpeg",
+                                "fake-image-content".getBytes());
+
+                // Act & Assert - Accepts various error codes depending on validation layer
+                mockMvc.perform(multipart("/api/analyze")
+                                .file(imageFile)
+                                .param("jobDescription", TestConstants.SAMPLE_JD_BACKEND))
+                                .andExpect(status().is(anyOf(is(400), is(415), is(500))))
+                                .andExpect(jsonPath("$.error").exists());
+        }
 
         // @Test // Disabled - minimal PDF doesn't work with PDFBox
         @DisplayName("POST /api/analyze - Should handle PDF file")

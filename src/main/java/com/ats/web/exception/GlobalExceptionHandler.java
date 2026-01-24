@@ -68,6 +68,6 @@ public class GlobalExceptionHandler {
         body.put("error", error);
         body.put("message", message);
         body.put("status", status);
-        return ResponseEntity.status(httpStatus).body(body);
+        return ResponseEntity.status(httpStatus.value()).body(body);
     }
 }
