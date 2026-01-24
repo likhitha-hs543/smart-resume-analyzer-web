@@ -1,8 +1,15 @@
 // API Configuration
 const API_BASE_URL = window.location.origin;
 
+// Score Thresholds
+const SCORE_THRESHOLDS = {
+    STRONG: 80,
+    GOOD: 60
+};
+
 /**
  * Main function to analyze resume against job description
+ * @returns {Promise<void>}
  */
 async function analyzeResume() {
     const resumeInput = document.getElementById("resumeFile");
@@ -44,7 +51,13 @@ async function analyzeResume() {
         displayResults(result);
 
     } catch (error) {
-        resultsDiv.innerHTML = '<div class="card"><strong>Error:</strong> Unable to analyze resume. Please try again.</div>';
+        console.error('Analysis error:', error);
+        resultsDiv.innerHTML = `
+            <div class="card">
+                <strong>Error:</strong> Unable to analyze resume. 
+                ${error.message ? `<br><small style="color: #64748b; margin-top: 8px;">${error.message}</small>` : 'Please try again.'}
+            </div>
+        `;
     } finally {
         analyzeBtn.disabled = false;
         analyzeBtn.textContent = "Check ATS Match";
@@ -62,9 +75,9 @@ function displayResults(result) {
 
     // Generate summary text
     let summaryText = "";
-    if (score >= 80) {
+    if (score >= SCORE_THRESHOLDS.STRONG) {
         summaryText = "Strong match! Your resume aligns well with the job requirements.";
-    } else if (score >= 60) {
+    } else if (score >= SCORE_THRESHOLDS.GOOD) {
         summaryText = "Good match, but key skill gaps may reduce ATS ranking.";
     } else {
         summaryText = "Significant gaps detected. Consider adding missing skills to improve ATS performance.";
