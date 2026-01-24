@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.lang.management.ManagementFactory;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,11 +35,13 @@ public class AnalyzerController {
      * @return Service health status
      */
     @GetMapping("/health")
-    public ResponseEntity<Map<String, String>> health() {
-        Map<String, String> status = new HashMap<>();
+    public ResponseEntity<Map<String, Object>> health() {
+        Map<String, Object> status = new HashMap<>();
         status.put("status", "UP");
         status.put("service", "Smart Resume Analyzer");
+        status.put("version", "1.0.0");
         status.put("timestamp", LocalDateTime.now().toString());
+        status.put("uptime", ManagementFactory.getRuntimeMXBean().getUptime());
         return ResponseEntity.ok(status);
     }
 }
